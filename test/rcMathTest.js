@@ -1,5 +1,8 @@
 import * as assert from 'assert/strict';
+import { assertEqualEpsilon, assertEqualPointEpsilon } from './helpers/assert.js';
 import * as rcMath from '../src/rcMath.js';
+
+const origin = {x: 0, y: 0};
 
 describe('toRadians', () => {
     it('returns correctly for common angles', () => {
@@ -93,8 +96,7 @@ describe('tanDeg', () => {
         assert.ok(rcMath.tanDeg(90) >= veryLargeNumber, rcMath.tanDeg(90));
         assert.ok(rcMath.tanDeg(270) >= veryLargeNumber, rcMath.tanDeg(270));
 
-        let tan45 = rcMath.tanDeg(45);
-        assert.ok(tan45 <= 1 && tan45 >= 1 - Number.EPSILON, tan45);
+        assertEqualEpsilon(rcMath.tanDeg(45), 1);
     });
 
     xit('returns correctly for negative common angles', () => {
@@ -116,15 +118,21 @@ describe('tanDeg', () => {
     });
 });
 
-/**
- * @param {number} actual
- * @param {number} expected
- */
-function assertEqualEpsilon(actual, expected) {
-    // We use an epsilon multpiler because, in practice, rounding errors seem
-    // to be larger than the min floating point round off.
-    const epsilon = 3 * Number.EPSILON;
-    const msg = `excepted: ${expected}. actual: ${actual}. epsilon: ${epsilon}`;
-    assert.ok(expected + epsilon >= actual, msg);
-    assert.ok(expected - epsilon <= actual, msg);
-}
+describe('getDistance', () => {
+    it('returns the correct distance for 45 degree moves', () => {
+        assertEqualEpsilon(rcMath.getDistance(origin, {x: 1, y: 1}), Math.sqrt(2));
+        assertEqualEpsilon(rcMath.getDistance(origin, {x: 2, y: 2}), Math.sqrt(8));
+    });
+
+    it('returns the correct distance for horizontal moves', () => {
+        assert.strictEqual(rcMath.getDistance(origin, {x: 2, y: 0}), 2);
+        assert.strictEqual(rcMath.getDistance(origin, {x: 4, y: 0}), 4);
+        assert.strictEqual(rcMath.getDistance(origin, {x: -2, y: 0}), 2);
+    });
+
+    it('returns the correct distance for vertical moves', () => {
+        assert.strictEqual(rcMath.getDistance(origin, {x: 0, y: 2}), 2);
+        assert.strictEqual(rcMath.getDistance(origin, {x: 0, y: 4}), 4);
+        assert.strictEqual(rcMath.getDistance(origin, {x: 0, y: -2}), 2);
+    });
+});

@@ -1,3 +1,6 @@
+import { RESOLUTION } from "./config.js";
+import { renderFrame } from "./renderer.js";
+
 function appendPageBody() {
     const canvasEl = document.createElement('canvas');
     canvasEl.width = RESOLUTION.width;

@@ -1,0 +1,15 @@
+{
+  "name": "raycasting",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "mocha": "^9.0.3"
+  }
+}

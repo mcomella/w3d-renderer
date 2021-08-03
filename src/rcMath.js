@@ -41,3 +41,7 @@ export function tanDeg(degrees) {
     }
     return adjustedResult;
 }
+
+export function getDistance(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+}
