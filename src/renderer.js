@@ -8,6 +8,7 @@ known perf improvements:
 - Maybe this has since been optimized:
     https://www.html5rocks.com/en/tutorials/canvas/performance/
 - getContext('2d', { alpha: false })
+- https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial
 */
 
 import { maps } from "./maps.js";
@@ -17,19 +18,15 @@ const WALL_WIDTH = 8; // ft.
 
 const map = maps[0];
 
-let angle = 180;
-
 /**
  * @param {CanvasRenderingContext2D} ctx
  * @param {import("./config").Resolution} resolution
+ * @param {Point} playerLoc
+ * @param {number} playerAngle
  */
-export function renderFrame(ctx, resolution) {
+export function renderFrame(ctx, resolution, playerLoc, playerAngle) {
     clearFrame(ctx, resolution);
-    drawWalls(ctx, resolution, {x: 15, y: 33}, angle);
-    angle += 0.75;
-    if (angle >= 360) {
-        angle = 0;
-    }
+    drawWalls(ctx, resolution, playerLoc, playerAngle);
 }
 
 /**
