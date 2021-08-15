@@ -4,6 +4,6 @@
  * @property {number} height
  */
 export const RESOLUTION = {
-    width: 320,
-    height: 200,
+    width: 640,
+    height: 400,
 };
