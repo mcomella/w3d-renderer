@@ -1,5 +1,8 @@
 import * as rcMath from "./rcMath.js";
 
+const VELOCITY_CONSTANT = 1; // ft per frame
+const ROTATION_CONSTANT = 1; // degree per frame
+
 /**
  * @param {DOMHighResTimeStamp} time
  * @param {Point} playerLoc
@@ -7,19 +10,19 @@ import * as rcMath from "./rcMath.js";
  * @param {import("./input").InputState} nextInputState
  */
 export function updateWorld(time, playerLoc, playerAngle, nextInputState) {
-    let zModifier = 0;
-    if (nextInputState.moveForward) zModifier -= 1;
-    if (nextInputState.moveBackward) zModifier += 1;
-    const zVelocity = 1 /* constant */ * zModifier;
+    let hypotModifier = 0;
+    if (nextInputState.moveForward) hypotModifier -= 1; // for signs, assume angle = 0.
+    if (nextInputState.moveBackward) hypotModifier += 1;
+    const hypotVelocity = VELOCITY_CONSTANT * hypotModifier;
 
     let rotationModifier = 0;
     if (nextInputState.turnLeft) rotationModifier -= 1;
     if (nextInputState.turnRight) rotationModifier += 1;
-    const newPlayerAngle = playerAngle + 1 /* constant */ * rotationModifier;
+    const newPlayerAngle = rcMath.adjustAngleTo360(playerAngle + ROTATION_CONSTANT * rotationModifier);
 
     const newPlayerLoc = {
-        x: playerLoc.x + zVelocity * rcMath.sinDeg(newPlayerAngle), // ... + HsinΘ
-        y: playerLoc.y + zVelocity * rcMath.cosDeg(newPlayerAngle), // ... + HcosΘ
+        x: playerLoc.x - hypotVelocity * rcMath.sinDeg(newPlayerAngle), // ... + HsinΘ
+        y: playerLoc.y + hypotVelocity * rcMath.cosDeg(newPlayerAngle), // ... + HcosΘ
     };
     return {
         playerLoc: newPlayerLoc,
