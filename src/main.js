@@ -7,19 +7,18 @@ import { renderFrame } from "./renderer.js";
 let canvasContext;
 let isRendering = true;
 
-function appendPageBody() {
-    const canvasEl = document.createElement('canvas');
+function configureBody() {
+    const canvasEl = document.querySelector('canvas');
     canvasEl.width = RESOLUTION.width;
     canvasEl.height = RESOLUTION.height;
-    canvasEl.innerText = 'Canvas unavailable';
-    document.body.append(canvasEl);
-    document.body.append(document.createElement('br'));
+    // canvasEl.addEventListener('keydown', (e) => {
+    // });
+    // canvasEl.addEventListener('keyup', (e) => {
+    // });
 
-    const stopRenderButton = document.createElement('button');
-    stopRenderButton.innerText = 'Stop rendering';
-    stopRenderButton.type = 'button';
-    stopRenderButton.addEventListener('click', (e) => { isRendering = false; });
-    document.body.append(stopRenderButton);
+    document.querySelector('button').addEventListener('click', (e) => {
+        isRendering = false;
+    });
 }
 
 /**
@@ -33,10 +32,17 @@ function onAnimationFrame(time) {
     }
 }
 
+/**
+ *
+ * @param {DOMHighResTimeStamp} time
+ */
+function updateWorld(time) {
+
+}
+
 function main() {
-    appendPageBody();
-    const canvas = document.querySelector('canvas');
-    canvasContext = canvas.getContext('2d');
+    configureBody();
+    canvasContext = document.querySelector('canvas').getContext('2d');
     window.requestAnimationFrame(onAnimationFrame);
 }
 

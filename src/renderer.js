@@ -5,6 +5,9 @@ known perf improvements:
 - don't allocate in inner loop
 - remove adjustCircle recursion. Unroll the loop to lose generics
 - no assertions, e.g. getXIntercept
+- Maybe this has since been optimized:
+    https://www.html5rocks.com/en/tutorials/canvas/performance/
+- getContext('2d', { alpha: false })
 */
 
 import { maps } from "./maps.js";
@@ -124,7 +127,7 @@ function drawWall(ctx, columnNum, distance) {
     // So at 10ft away, the height should be 200px. 200 = s / 10. Scaling factor = 2000.
     const scalingFactor = 2000;
     const wallHeight = Math.round(scalingFactor / distance);
-    const y0 = 200 / 2 - wallHeight / 2; // TODO: off by one? hard-coded res.
+    const y0 = 200 / 2 - wallHeight / 2; // TODO: off by one? hard-coded res. subpixel.
 
     ctx.fillStyle = '#00f';
     ctx.fillRect(columnNum, y0, 1, wallHeight);
