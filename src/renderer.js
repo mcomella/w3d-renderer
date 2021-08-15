@@ -54,10 +54,10 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
     // Column refers to the physical column of pixels we will draw on the monitor.
 
     // TODO: adjustment unnecessary?
-    const startAngle = adjustAngleForCircleOverflow(playerAngle - resolution.width / 2 / 10); // TODO: explain 10 const.
+    const startAngle = rcMath.adjustAngleTo360(playerAngle - resolution.width / 2 / 10); // TODO: explain 10 const.
     for (let columnNum = 0; columnNum < resolution.width; columnNum++) {
         // Origin is pointing vertically up even though y increases downwards.
-        const colAngleFromOrigin = adjustAngleForCircleOverflow(startAngle + columnNum / 10); // TODO: explain 10.
+        const colAngleFromOrigin = rcMath.adjustAngleTo360(startAngle + columnNum / 10); // TODO: explain 10.
         if (colAngleFromOrigin === 0 || colAngleFromOrigin === 180) {
             // TODO: ywalk special case.
             continue;
@@ -190,23 +190,6 @@ function getInitialYIntercept(playerLoc, rayAngle) {
         x: yintx,
         y: yinty,
     };
-}
-
-/**
- * @param {number} angle
- * @returns {number}
- */
-function adjustAngleForCircleOverflow(angle) {
-    // TODO: a circle has 360 degrees. So no degree 0?
-    let finalAngle;
-    if (angle >= 360) { // TODO: constants
-        finalAngle = angle - 360;
-    } else if (angle < 0) {
-        finalAngle = angle + 360;
-    } else {
-        finalAngle = angle;
-    }
-    return finalAngle;
 }
 
 export const testables = {

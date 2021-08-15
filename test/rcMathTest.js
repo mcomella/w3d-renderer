@@ -136,3 +136,26 @@ describe('getDistance', () => {
         assert.strictEqual(rcMath.getDistance(origin, {x: 0, y: -2}), 2);
     });
 });
+
+describe('adjustAngleTo360', () => {
+    it('for angles < 360 returns the same value', () => {
+        assert.strictEqual(0, rcMath.adjustAngleTo360(0));
+        assert.strictEqual(180, rcMath.adjustAngleTo360(180));
+        assert.strictEqual(359, rcMath.adjustAngleTo360(359));
+    });
+
+    it('for angles > 360 returns the adjusted value', () => {
+        assert.strictEqual(0, rcMath.adjustAngleTo360(360));
+        assert.strictEqual(0, rcMath.adjustAngleTo360(720));
+        assert.strictEqual(45, rcMath.adjustAngleTo360(360 + 45));
+        assert.strictEqual(90, rcMath.adjustAngleTo360(720 + 90));
+    });
+
+    it('for angles < 0 returns the adjusted value', () => {
+        assert.strictEqual(359, rcMath.adjustAngleTo360(-1));
+        assert.strictEqual(180, rcMath.adjustAngleTo360(-180));
+        assert.strictEqual(0, rcMath.adjustAngleTo360(-360));
+        assert.strictEqual(0, rcMath.adjustAngleTo360(-720));
+        assert.strictEqual(270, rcMath.adjustAngleTo360(-720 - 90));
+    });
+});

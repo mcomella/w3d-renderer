@@ -36,6 +36,21 @@ export function tanDeg(degrees) {
     return Math.abs(result) <= Number.EPSILON ? 0 : result;
 }
 
+/**
+ * @param {Point} a
+ * @param {Point} b
+ * @returns {number}
+ */
 export function getDistance(a, b) {
     return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+/**
+ * @param {number} angle
+ * @returns {number}
+ */
+export function adjustAngleTo360(angle) {
+    while (angle >= 360) angle -= 360;
+    while (angle < 0) angle += 360;
+    return angle;
 }
