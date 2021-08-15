@@ -33,13 +33,7 @@ export function cosDeg(degrees) {
  */
 export function tanDeg(degrees) {
     const result = Math.tan(toRadians(degrees));
-    let adjustedResult;
-    if (Math.abs(result) <= Number.EPSILON) {
-        adjustedResult = 0;
-    } else {
-        adjustedResult = result;
-    }
-    return adjustedResult;
+    return Math.abs(result) <= Number.EPSILON ? 0 : result;
 }
 
 export function getDistance(a, b) {
