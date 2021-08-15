@@ -17,6 +17,7 @@ function configureBody() {
     const stopRenderButton = document.querySelector('button');
     stopRenderButton.addEventListener('click', (e) => {
         isRendering = false;
+        stopRenderButton.disabled = true;
     });
 
     // Adding key events to body seems more natural than making canvas focusable.
