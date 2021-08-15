@@ -80,7 +80,7 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
             const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist; // TODO: other algo
 
             if (isWall(closestIntercept)) {
-                drawWall(ctx, columnNum, closestInterceptDist); // TODO: name collision
+                drawWall(ctx, resolution, columnNum, closestInterceptDist); // TODO: name collision
                 break;
             }
 
@@ -113,10 +113,11 @@ function isWall(location) {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
+ * @param {import("./config").Resolution} resolution
  * @param {number} columnNum
  * @param {number} distance
  */
-function drawWall(ctx, columnNum, distance) {
+function drawWall(ctx, resolution, columnNum, distance) {
     // If I'm 5' and the walls are 10', the wall fills my field of view around 8' away.
     // scalingFactor derivation: 10 = x / 8. x/scalingFactor = 80 IRL. This is in feet.
     // In game, if walls are 8' tall, then 8 = 80 / d. d = 10. So I must be 10' ft away
@@ -124,7 +125,7 @@ function drawWall(ctx, columnNum, distance) {
     // So at 10ft away, the height should be 200px. 200 = s / 10. Scaling factor = 2000.
     const scalingFactor = 2000;
     const wallHeight = Math.round(scalingFactor / distance);
-    const y0 = 200 / 2 - wallHeight / 2; // TODO: off by one? hard-coded res. subpixel.
+    const y0 = resolution.height / 2 - wallHeight / 2; // TODO: off by one? hard-coded res. subpixel.
 
     ctx.fillStyle = '#00f';
     ctx.fillRect(columnNum, y0, 1, wallHeight);
