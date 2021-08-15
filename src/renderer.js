@@ -14,16 +14,19 @@ const WALL_WIDTH = 8; // ft.
 
 const map = maps[0];
 
+let angle = 180;
+
 /**
  * @param {CanvasRenderingContext2D} ctx
  * @param {import("./config").Resolution} resolution
  */
 export function renderFrame(ctx, resolution) {
-    let before = Date.now();
     clearFrame(ctx, resolution);
-    drawWalls(ctx, resolution, {x: 4, y: 10}, 180);
-    let after = Date.now();
-    console.log('render duration ' + (after - before));
+    drawWalls(ctx, resolution, {x: 15, y: 33}, angle);
+    angle += 0.75;
+    if (angle >= 360) {
+        angle = 0;
+    }
 }
 
 /**
@@ -204,11 +207,6 @@ function adjustAngleForCircleOverflow(angle) {
         finalAngle = angle;
     }
     return finalAngle;
-}
-
-function castRay() {
-    // get distance (find nearest intersection to wall)
-    // draw wall height inverse to distance
 }
 
 export const testables = {
