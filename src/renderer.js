@@ -21,7 +21,7 @@ const map = maps[0];
 /**
  * @param {CanvasRenderingContext2D} ctx
  * @param {import("./config").Resolution} resolution
- * @param {Point} playerLoc
+ * @param {import("./rcMath").Point} playerLoc
  * @param {number} playerAngle
  */
 export function renderFrame(ctx, resolution, playerLoc, playerAngle) {
@@ -46,7 +46,7 @@ function clearFrame(ctx, resolution) {
 /**
  * @param {CanvasRenderingContext2D} ctx
  * @param {import("./config").Resolution} resolution
- * @param {Point} playerLoc
+ * @param {import("./rcMath").Point} playerLoc
  * @param {number} playerAngle
  */
 function drawWalls(ctx, resolution, playerLoc, playerAngle) {
@@ -151,7 +151,7 @@ function getYInterceptSteps(playerLoc, xintercept) {
  * Even though angle > 90 breaks soh-cah-toa, I think it tan(theta)
  * does the right thing when the angle is larger.
  *
- * @param {Point} playerLoc
+ * @param {import("./rcMath").Point} playerLoc
  * @param {number} rayAngle
  */
 function getInitialXIntercept(playerLoc, rayAngle) {
@@ -173,7 +173,7 @@ function getInitialXIntercept(playerLoc, rayAngle) {
 }
 
 /**
- * @param {Point} playerLoc
+ * @param {import("./rcMath").Point} playerLoc
  * @param {number} rayAngle
  */
 function getInitialYIntercept(playerLoc, rayAngle) {

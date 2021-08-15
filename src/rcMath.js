@@ -37,6 +37,10 @@ export function tanDeg(degrees) {
 }
 
 /**
+ * @typedef {Object} Point
+ * @property {number} x
+ * @property {number} y
+ *
  * @param {Point} a
  * @param {Point} b
  * @returns {number}

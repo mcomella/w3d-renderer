@@ -14,8 +14,8 @@ export function assertEqualEpsilon(actual, expected, msg) {
 }
 
 /**
- * @param {Point} actual
- * @param {Point} expected
+ * @param {import("../../src/rcMath").Point} actual
+ * @param {import("../../src/rcMath").Point} expected
  */
 export function assertEqualPointEpsilon(actual, expected) {
     assertEqualEpsilon(actual.x, expected.x, 'x');

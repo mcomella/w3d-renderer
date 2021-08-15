@@ -3,11 +3,15 @@ import { onKey, nextInputState } from "./input.js";
 import { renderFrame } from "./renderer.js";
 import { updateWorld } from "./world.js";
 
-/**
- * @type [CanvasRenderingContext2D]
- */
+/** @type {CanvasRenderingContext2D} */
 let canvasContext;
 let isRendering = true;
+
+/** @type {import("./world").WorldState} */
+let worldState = {
+    playerLoc: { x: 15, y: 33 },
+    playerAngle: 180,
+};
 
 function configureBody() {
     const canvasEl = document.querySelector('canvas');
@@ -26,19 +30,13 @@ function configureBody() {
     body.addEventListener('keyup', (e) => { onKey(e.code, /* isDown */ false); });
 }
 
-let playerLoc = { x: 15, y: 33 };
-let playerAngle = 180;
-
 /**
  * @param {DOMHighResTimeStamp} time
  */
 function onAnimationFrame(time) {
     // TODO: delta based on time passed
-    const nextState = updateWorld(time, playerLoc, playerAngle, nextInputState);
-    playerLoc = nextState.playerLoc;
-    playerAngle = nextState.playerAngle;
-
-    renderFrame(canvasContext, RESOLUTION, playerLoc, playerAngle);
+    worldState = updateWorld(time, worldState, nextInputState);
+    renderFrame(canvasContext, RESOLUTION, worldState.playerLoc, worldState.playerAngle);
     if (isRendering) {
         window.requestAnimationFrame(onAnimationFrame);
     }
@@ -47,7 +45,7 @@ function onAnimationFrame(time) {
 function main() {
     configureBody();
     canvasContext = document.querySelector('canvas').getContext('2d');
-    window.requestAnimationFrame(onAnimationFrame);
+    window.requestAnimationFrame(onAnimationFrame); // start render loop.
 }
 
 main();
