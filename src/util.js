@@ -3,6 +3,6 @@ export function assert(statement, msg) {
         if (!msg) {
             msg = '';
         }
-        throw Exception(`assertion failure: ${msg}`);
+        throw `assertion failure: ${msg}`;
     }
 }

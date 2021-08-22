@@ -12,14 +12,11 @@ known perf improvements:
 - x/yInterceptDist doesn't need hypot. Can just use x/y coordinates? e.g. if angle is 0-90, then smallest x is closest.
 */
 
-import { maps } from "./maps.js";
 import * as rcMath from './rcMath.js';
 import { getWallDistImpl } from "./rendererWallDistImpl.js";
 import { assert } from "./util.js";
 
 const BLOCK_SIZE = 8; // ft.
-
-const map = maps[0];
 
 /**
  * @param {CanvasRenderingContext2D} ctx

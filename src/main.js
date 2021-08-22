@@ -19,7 +19,7 @@ function configureBody() {
     canvasEl.height = RESOLUTION.height;
 
     const stopRenderButton = document.querySelector('button');
-    stopRenderButton.addEventListener('click', (e) => {
+    stopRenderButton.addEventListener('click', () => {
         isRendering = false;
         stopRenderButton.disabled = true;
     });
