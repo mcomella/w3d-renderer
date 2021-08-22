@@ -1,7 +1,7 @@
 import * as rcMath from "./rcMath.js";
 
 const VELOCITY_CONSTANT = 1; // ft per frame
-const ROTATION_CONSTANT = 1; // degree per frame
+const ROTATION_CONSTANT = 2; // degree per frame
 
 /**
  * @typedef {Object} WorldState

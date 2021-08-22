@@ -9,10 +9,12 @@ known perf improvements:
     https://www.html5rocks.com/en/tutorials/canvas/performance/
 - getContext('2d', { alpha: false })
 - https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial
+- x/yInterceptDist doesn't need hypot. Can just use x/y coordinates? e.g. if angle is 0-90, then smallest x is closest.
 */
 
 import { maps } from "./maps.js";
 import * as rcMath from './rcMath.js';
+import { getWallDistImpl } from "./rendererWallDistImpl.js";
 
 const WALL_WIDTH = 8; // ft.
 
@@ -39,7 +41,7 @@ function clearFrame(ctx, resolution) {
     ctx.fillRect(0, 0, resolution.width, resolution.height / 2);
 
     // Floor
-    ctx.fillStyle = '#222';
+    ctx.fillStyle = '#555';
     ctx.fillRect(0, resolution.height / 2, resolution.width, resolution.height);
 }
 
@@ -68,7 +70,7 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
 
         let xintercept = getInitialXIntercept(playerLoc, colAngleFromOrigin);
         let yintercept = getInitialYIntercept(playerLoc, colAngleFromOrigin);
-        // TODO: this shouldn't be current location.
+        // TODO: this shouldn't be current location. infinite loop.
 
         const xinterceptSteps = getXInterceptSteps(playerLoc, xintercept);
         const yinterceptSteps = getYInterceptSteps(playerLoc, xintercept);
@@ -77,10 +79,12 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
             const xinterceptDist = rcMath.getDistance(xintercept, playerLoc);
             const yinterceptDist = rcMath.getDistance(yintercept, playerLoc);
             const closestIntercept = (xinterceptDist < yinterceptDist) ? xintercept : yintercept; // TODO: okay what happens if equal?
-            const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist; // TODO: other algo
 
             if (isWall(closestIntercept)) {
-                drawWall(ctx, resolution, columnNum, closestInterceptDist); // TODO: name collision
+                const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
+                const isIntersectX  = xinterceptDist < yinterceptDist;
+                const wallDist = getWallDistImpl(closestInterceptDist, closestIntercept, playerLoc, playerAngle, colAngleFromOrigin);
+                drawWall(ctx, resolution, columnNum, wallDist, isIntersectX); // TODO: name collision
                 break;
             }
 
@@ -117,7 +121,7 @@ function isWall(location) {
  * @param {number} columnNum
  * @param {number} distance
  */
-function drawWall(ctx, resolution, columnNum, distance) {
+function drawWall(ctx, resolution, columnNum, distance, isIntersectX) {
     // If I'm 5' and the walls are 10', the wall fills my field of view around 8' away.
     // scalingFactor derivation: 10 = x / 8. x/scalingFactor = 80 IRL. This is in feet.
     // In game, if walls are 8' tall, then 8 = 80 / d. d = 10. So I must be 10' ft away
@@ -127,7 +131,7 @@ function drawWall(ctx, resolution, columnNum, distance) {
     const wallHeight = Math.round(scalingFactor / distance);
     const y0 = resolution.height / 2 - wallHeight / 2; // TODO: off by one? hard-coded res. subpixel.
 
-    ctx.fillStyle = '#00f';
+    ctx.fillStyle = isIntersectX ? '#00f' : '#00a';
     ctx.fillRect(columnNum, y0, 1, wallHeight);
 }
 
