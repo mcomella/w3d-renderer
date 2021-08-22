@@ -68,8 +68,8 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
             continue;
         }
 
-        let xintercept = getInitialXIntercept(playerLoc, colAngleFromOrigin);
-        let yintercept = getInitialYIntercept(playerLoc, colAngleFromOrigin);
+        let xintercept = getFirstRayToGridXIntercept(playerLoc, colAngleFromOrigin);
+        let yintercept = getFirstRayToGridYIntercept(playerLoc, colAngleFromOrigin);
         // TODO: this shouldn't be current location. infinite loop.
 
         const xinterceptSteps = getXInterceptSteps(playerLoc, xintercept);
@@ -152,52 +152,47 @@ function getYInterceptSteps(playerLoc, xintercept) {
 }
 
 /**
- * Even though angle > 90 breaks soh-cah-toa, I think it tan(theta)
- * does the right thing when the angle is larger.
- *
  * @param {import("./rcMath").Point} playerLoc
- * @param {number} rayAngle
+ * @param {number} thetaRay
  */
-function getInitialXIntercept(playerLoc, rayAngle) {
+function getFirstRayToGridXIntercept(playerLoc, thetaRay) {
     // TODO: should we handle negative & overflow angles?
-    if (rayAngle === 0 || rayAngle === 180) { // could do Math.abs(angle) % 180 === 0
+    if (thetaRay === 0 || thetaRay === 180) { // could do Math.abs(angle) % 180 === 0
         throw Exception('Cannot determine xintercept of vertical line');
     }
 
-    // We're "floor/ceil"ing to the nearest gridline. e.g. if we're decreasing in the grid,
-    // wall_width = 8, and playerLoc = 12, Math.floor(12 / 8) = 1. 1 * 8 = 8;
-    const roundingFn = rayAngle < 180 ? Math.ceil : Math.floor;
-    const xintx = roundingFn(playerLoc.x / WALL_WIDTH) * WALL_WIDTH;
-    const deltaY = (xintx - playerLoc.x) / rcMath.tanDeg(rayAngle); // derived from soh-cah-TOA.
-    const xinty = playerLoc.y - deltaY;
+    // We're "floor/ceil"ing playerX to the nearest gridline, i.e. a possible wall location.
+    const roundingFn = thetaRay < 180 ? Math.ceil : Math.floor;
+    const xIntercept = roundingFn(playerLoc.x / WALL_WIDTH) * WALL_WIDTH;
+
+    const dx = xIntercept - playerLoc.x;
     return {
-        x: xintx,
-        y: xinty,
+        x: xIntercept,
+        y: -dx / rcMath.tanDeg(thetaRay) + playerLoc.y, // derived via soh-cah-TOA.
     };
 }
 
 /**
  * @param {import("./rcMath").Point} playerLoc
- * @param {number} rayAngle
+ * @param {number} thetaRay
  */
-function getInitialYIntercept(playerLoc, rayAngle) {
-    if (rayAngle === 90 || rayAngle === 270) {
+function getFirstRayToGridYIntercept(playerLoc, thetaRay) {
+    if (thetaRay === 90 || thetaRay === 270) {
         throw Exception('Cannot determine yintercept of horizontal line');
     }
 
-    // We're "floor/ceil"ing to the nearest gridline. e.g. if we're decreasing in the grid,
-    // wall_width = 8, and playerLoc = 12, Math.floor(12 / 8) = 1. 1 * 8 = 8;
-    const roundingFn = rayAngle < 90 || rayAngle > 270 ? Math.floor : Math.ceil;
-    const yinty = roundingFn(playerLoc.y / WALL_WIDTH) * WALL_WIDTH;
-    const deltaX = (yinty - playerLoc.y) * rcMath.tanDeg(rayAngle); // derived from soh-cah-TOA.
-    const yintx = playerLoc.x - deltaX;
+    // We're "floor/ceil"ing playerY to the nearest gridline, i.e. a possible wall location.
+    const roundingFn = thetaRay < 90 || thetaRay > 270 ? Math.floor : Math.ceil;
+    const yIntercept = roundingFn(playerLoc.y / WALL_WIDTH) * WALL_WIDTH;
+
+    const dy = yIntercept - playerLoc.y;
     return {
-        x: yintx,
-        y: yinty,
+        x: -dy * rcMath.tanDeg(thetaRay) + playerLoc.x, // derived via soh-cah-TOA.
+        y: yIntercept,
     };
 }
 
 export const testables = {
-    getInitialXIntercept, getInitialYIntercept,
+    getFirstRayToGridXIntercept, getFirstRayToGridYIntercept,
     getXInterceptSteps, getYInterceptSteps,
 };
