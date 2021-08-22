@@ -12,6 +12,7 @@ known perf improvements:
 - x/yInterceptDist doesn't need hypot. Can just use x/y coordinates? e.g. if angle is 0-90, then smallest x is closest.
 */
 
+import { WALL_HEIGHT_SCALE_FACTOR } from './config.js';
 import * as rcMath from './rcMath.js';
 import { getWallDist } from "./rendererWallDistImpl.js";
 import { assert } from "./util.js";
@@ -120,17 +121,14 @@ function isWall(location) {
  * @param {number} distance
  */
 function drawWall(ctx, resolution, columnNum, distance, isIntersectX) {
-    // If I'm 5' and the walls are 10', the wall fills my field of view around 8' away.
-    // scalingFactor derivation: 10 = x / 8. x/scalingFactor = 80 IRL. This is in feet.
-    // In game, if walls are 8' tall, then 8 = 80 / d. d = 10. So I must be 10' ft away
-    // to fill the field of view.
-    // So at 10ft away, the height should be 200px. 200 = s / 10. Scaling factor = 2000.
-    const scalingFactor = 2000;
-    const wallHeight = Math.round(scalingFactor / distance);
-    const y0 = resolution.height / 2 - wallHeight / 2; // TODO: off by one? hard-coded res. subpixel.
+    // Note: for impl simplicity, this draws outside the canvas. Is that a (perf) problem?
+    const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / distance);
+    const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
 
+    // Changing the color between x/y intersections changes the lighting, improving
+    // the perception of perspective.
     ctx.fillStyle = isIntersectX ? '#00f' : '#00a';
-    ctx.fillRect(columnNum, y0, 1, wallHeight);
+    ctx.fillRect(/* x */ columnNum, /* y */ y0, /* width */ 1, wallHeight);
 }
 
 function getXInterceptSteps(playerLoc, xintercept, thetaRay) {
