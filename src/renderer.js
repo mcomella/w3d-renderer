@@ -15,8 +15,9 @@ known perf improvements:
 import { maps } from "./maps.js";
 import * as rcMath from './rcMath.js';
 import { getWallDistImpl } from "./rendererWallDistImpl.js";
+import { assert } from "./util.js";
 
-const WALL_WIDTH = 8; // ft.
+const BLOCK_SIZE = 8; // ft.
 
 const map = maps[0];
 
@@ -72,8 +73,8 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
         let yintercept = getFirstRayToGridYIntercept(playerLoc, colAngleFromOrigin);
         // TODO: this shouldn't be current location. infinite loop.
 
-        const xinterceptSteps = getXInterceptSteps(playerLoc, xintercept);
-        const yinterceptSteps = getYInterceptSteps(playerLoc, xintercept);
+        const xinterceptSteps = getXInterceptSteps(playerLoc, xintercept, colAngleFromOrigin);
+        const yinterceptSteps = getYInterceptSteps(playerLoc, xintercept, colAngleFromOrigin);
 
         while (true) {
             const xinterceptDist = rcMath.getDistance(xintercept, playerLoc);
@@ -135,19 +136,21 @@ function drawWall(ctx, resolution, columnNum, distance, isIntersectX) {
     ctx.fillRect(columnNum, y0, 1, wallHeight);
 }
 
-function getXInterceptSteps(playerLoc, xintercept) {
-    const xstep = WALL_WIDTH * Math.sign(xintercept.x - playerLoc.x);
+function getXInterceptSteps(playerLoc, xintercept, thetaRay) {
+    assert(thetaRay != 0 && thetaRay != 180); // TODO: is never negative? Also Math.abs(angle) % 180
+    const dx = BLOCK_SIZE * Math.sign(xintercept.x - playerLoc.x);
     return {
-        xStep: xstep,
-        yStep: xstep * ((xintercept.y - playerLoc.y) / (xintercept.x - playerLoc.x)),
+        xStep: dx,
+        yStep: -dx / rcMath.tanDeg(thetaRay),
     };
 }
 
-function getYInterceptSteps(playerLoc, xintercept) {
-    const ystep = WALL_WIDTH * Math.sign(xintercept.y - playerLoc.y);
+function getYInterceptSteps(playerLoc, xintercept, thetaRay) {
+    assert(thetaRay != 90 && thetaRay != 270);
+    const dy = BLOCK_SIZE * Math.sign(xintercept.y - playerLoc.y);
     return {
-        xStep: ystep * ((xintercept.x - playerLoc.x) / (xintercept.y - playerLoc.y)),
-        yStep: ystep,
+        xStep: -dy * rcMath.tanDeg(thetaRay),
+        yStep: dy,
     };
 }
 
@@ -157,13 +160,11 @@ function getYInterceptSteps(playerLoc, xintercept) {
  */
 function getFirstRayToGridXIntercept(playerLoc, thetaRay) {
     // TODO: should we handle negative & overflow angles?
-    if (thetaRay === 0 || thetaRay === 180) { // could do Math.abs(angle) % 180 === 0
-        throw Exception('Cannot determine xintercept of vertical line');
-    }
+    assert(thetaRay != 0 && thetaRay != 180); // TODO: is always negative?
 
     // We're "floor/ceil"ing playerX to the nearest gridline, i.e. a possible wall location.
     const roundingFn = thetaRay < 180 ? Math.ceil : Math.floor;
-    const xIntercept = roundingFn(playerLoc.x / WALL_WIDTH) * WALL_WIDTH;
+    const xIntercept = roundingFn(playerLoc.x / BLOCK_SIZE) * BLOCK_SIZE;
 
     const dx = xIntercept - playerLoc.x;
     return {
@@ -177,13 +178,11 @@ function getFirstRayToGridXIntercept(playerLoc, thetaRay) {
  * @param {number} thetaRay
  */
 function getFirstRayToGridYIntercept(playerLoc, thetaRay) {
-    if (thetaRay === 90 || thetaRay === 270) {
-        throw Exception('Cannot determine yintercept of horizontal line');
-    }
+    assert(thetaRay != 90 && thetaRay != 270);
 
     // We're "floor/ceil"ing playerY to the nearest gridline, i.e. a possible wall location.
     const roundingFn = thetaRay < 90 || thetaRay > 270 ? Math.floor : Math.ceil;
-    const yIntercept = roundingFn(playerLoc.y / WALL_WIDTH) * WALL_WIDTH;
+    const yIntercept = roundingFn(playerLoc.y / BLOCK_SIZE) * BLOCK_SIZE;
 
     const dy = yIntercept - playerLoc.y;
     return {
