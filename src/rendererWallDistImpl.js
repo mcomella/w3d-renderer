@@ -1,11 +1,11 @@
-// A collection of different implementations for getIntersectToCameraPlaneDist: the value we
-// need to project a casted-ray to wall intersection back to the camera plane.
+// A collection of different implementations for getWallDist: we need to
+// measure the distance from the intersection point to the camera plane.
 
 import * as rcMath from './rcMath.js';
 
-export const getWallDistImpl = directImplExpensive;
+export const getWallDist = directImplExpensive;
 
-/** naive impl: causes fisheye. is distance from player to intersect. */
+/** naive impl: causes fisheye. is naive impl that is distance from player to intersect. */
 // eslint-disable-next-line no-unused-vars
 function fisheyeImpl(closestInterceptDist) {
     return closestInterceptDist;
@@ -13,14 +13,15 @@ function fisheyeImpl(closestInterceptDist) {
 
 /** expensive due to unnecessary distance calc, I think. I derived this. */
 // eslint-disable-next-line no-unused-vars
-function directImplExpensive(closestInterceptDist, intersectLoc, playerLoc, playerAngle, rayAngle) {
-    return closestInterceptDist * rcMath.cosDeg(Math.abs(playerAngle - rayAngle));
+function directImplExpensive(closestInterceptDist, interceptLoc, playerLoc, thetaPlayer, thetaRay) {
+    return closestInterceptDist * rcMath.cosDeg(thetaPlayer - thetaRay);
 }
 
-/** TODO: broken! cheap calc from W3D. */
+/** cheap calc from w3d. */
 // eslint-disable-next-line no-unused-vars
-function w3dImpl(closestInterceptDist, intersectLoc, playerLoc, playerAngle) {
-    const dx = intersectLoc.x - playerLoc.x;
-    const dy = intersectLoc.y - playerLoc.y;
+function w3dImpl(closestInterceptDist, interceptLoc, playerLoc, playerAngle) {
+    // TODO: broken! I never got this working.
+    const dx = interceptLoc.x - playerLoc.x;
+    const dy = interceptLoc.y - playerLoc.y;
     return Math.abs(dx * rcMath.cosDeg(playerAngle) + dy * rcMath.sinDeg(playerAngle));
 }

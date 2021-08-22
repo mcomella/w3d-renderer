@@ -13,7 +13,7 @@ known perf improvements:
 */
 
 import * as rcMath from './rcMath.js';
-import { getWallDistImpl } from "./rendererWallDistImpl.js";
+import { getWallDist } from "./rendererWallDistImpl.js";
 import { assert } from "./util.js";
 
 const BLOCK_SIZE = 8; // ft.
@@ -54,24 +54,24 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
     // Column refers to the physical column of pixels we will draw on the monitor.
 
     // TODO: adjustment unnecessary?
-    const startAngle = rcMath.adjustAngleTo360(playerAngle - resolution.width / 2 / 10); // TODO: explain 10 const.
+    const thetaStart = rcMath.adjustAngleTo360(playerAngle - resolution.width / 2 / 10); // TODO: explain 10 const.
     for (let columnNum = 0; columnNum < resolution.width; columnNum++) {
         // Origin is pointing vertically up even though y increases downwards.
-        const colAngleFromOrigin = rcMath.adjustAngleTo360(startAngle + columnNum / 10); // TODO: explain 10.
-        if (colAngleFromOrigin === 0 || colAngleFromOrigin === 180) {
+        const thetaRay = rcMath.adjustAngleTo360(thetaStart + columnNum / 10); // TODO: explain 10.
+        if (thetaRay === 0 || thetaRay === 180) {
             // TODO: ywalk special case.
             continue;
-        } else if (colAngleFromOrigin === 90 || colAngleFromOrigin === 270) {
+        } else if (thetaRay === 90 || thetaRay === 270) {
             // TODO: xwalk special case.
             continue;
         }
 
-        let xintercept = getFirstRayToGridXIntercept(playerLoc, colAngleFromOrigin);
-        let yintercept = getFirstRayToGridYIntercept(playerLoc, colAngleFromOrigin);
+        let xintercept = getFirstRayToGridXIntercept(playerLoc, thetaRay);
+        let yintercept = getFirstRayToGridYIntercept(playerLoc, thetaRay);
         // TODO: this shouldn't be current location. infinite loop.
 
-        const xinterceptSteps = getXInterceptSteps(playerLoc, xintercept, colAngleFromOrigin);
-        const yinterceptSteps = getYInterceptSteps(playerLoc, xintercept, colAngleFromOrigin);
+        const xinterceptSteps = getXInterceptSteps(playerLoc, xintercept, thetaRay);
+        const yinterceptSteps = getYInterceptSteps(playerLoc, xintercept, thetaRay);
 
         while (true) {
             const xinterceptDist = rcMath.getDistance(xintercept, playerLoc);
@@ -81,7 +81,7 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
             if (isWall(closestIntercept)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
                 const isIntersectX  = xinterceptDist < yinterceptDist;
-                const wallDist = getWallDistImpl(closestInterceptDist, closestIntercept, playerLoc, playerAngle, colAngleFromOrigin);
+                const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, playerAngle, thetaRay);
                 drawWall(ctx, resolution, columnNum, wallDist, isIntersectX); // TODO: name collision
                 break;
             }
