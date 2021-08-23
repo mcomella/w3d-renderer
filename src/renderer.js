@@ -16,7 +16,6 @@ known perf improvements:
 import { WALL_HEIGHT_SCALE_FACTOR } from './config.js';
 import * as rcMath from './rcMath.js';
 import { getWallDist } from "./rendererWallDistImpl.js";
-import { assert } from "./util.js";
 
 const BLOCK_SIZE = 8; // ft.
 
@@ -61,11 +60,6 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
         const thetaRay = thetaLeftmostFoV + pixelColumnNum / 10; // constant from field of view
         const rayXDirMultiplier = Math.sign(rcMath.sinDeg(thetaRay));
         const rayYDirMultiplier = -Math.sign(rcMath.cosDeg(thetaRay)); // negative b/c y points down.
-        if (rayYDirMultiplier === 0) { // ray is vertical.
-            continue;
-        } else if (rayXDirMultiplier === 0) { // ray is horizontal.
-            continue;
-        }
 
         let xintercept = getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier);
         let yintercept = getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier);
@@ -124,7 +118,11 @@ function drawWall(ctx, resolution, columnNum, distance, isIntersectX) {
 }
 
 function getXInterceptSteps(thetaRay, rayXDirMultiplier) {
-    assert(rayXDirMultiplier !== 0); // line is vertical.
+    if (rayXDirMultiplier === 0) {
+        // Line is vertical and this method would fail: return no changes to our dummy position.
+        return {xStep: 0, yStep: 0};
+    }
+
     const dx = BLOCK_SIZE * rayXDirMultiplier;
     return {
         xStep: dx,
@@ -133,7 +131,11 @@ function getXInterceptSteps(thetaRay, rayXDirMultiplier) {
 }
 
 function getYInterceptSteps(thetaRay, rayYDirMultiplier) {
-    assert(rayYDirMultiplier !== 0); // line is horizontal.
+    if (rayYDirMultiplier === 0) {
+        // Line is horizontal and this method would fail: return no changes to our dummy position.
+        return {xStep: 0, yStep: 0};
+    }
+
     const dy = BLOCK_SIZE * rayYDirMultiplier;
     return {
         xStep: -dy * rcMath.tanDeg(thetaRay),
@@ -146,7 +148,10 @@ function getYInterceptSteps(thetaRay, rayYDirMultiplier) {
  * @param {number} thetaRay
  */
 function getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier) {
-    assert(rayXDirMultiplier !== 0); // line is vertical.
+    if (rayXDirMultiplier === 0) {
+        // Line is vertical and this method would fail: return a large value so yIntercept will always be closer.
+        return {x: Number.MAX_VALUE / 2, y: Number.MAX_VALUE / 2};
+    }
 
     // We're "floor/ceil"ing playerX to the nearest gridline, i.e. a possible wall location.
     const roundingFn = rayXDirMultiplier === 1 ? Math.ceil : Math.floor;
@@ -164,7 +169,10 @@ function getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier) {
  * @param {number} thetaRay
  */
 function getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier) {
-    assert(rayYDirMultiplier !== 0); // line is horizontal.
+    if (rayYDirMultiplier === 0) {
+        // Line is horizontal and this method would fail: return a large value so yIntercept will always be closer.
+        return {x: Number.MAX_VALUE / 2, y: Number.MAX_VALUE / 2};
+    }
 
     // We're "floor/ceil"ing playerY to the nearest gridline, i.e. a possible wall location.
     const roundingFn = rayYDirMultiplier === 1 ? Math.ceil : Math.floor;
