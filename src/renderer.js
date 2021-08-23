@@ -48,32 +48,31 @@ function clearFrame(ctx, resolution) {
  * @param {CanvasRenderingContext2D} ctx
  * @param {import("./config").Resolution} resolution
  * @param {import("./rcMath").Point} playerLoc
- * @param {number} playerAngle
+ * @param {number} thetaPlayer
  */
-function drawWalls(ctx, resolution, playerLoc, playerAngle) {
-    // TODO: is startAngle correct? i.e. rounding errors with resolution.width and no off-by-one?
-    // Column refers to the physical column of pixels we will draw on the monitor.
+function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
+    // This expression hardcodes the same field of view as in w3d (I think).
+    const thetaLeftmostFoV = thetaPlayer - resolution.width / 2 / 10;
 
-    // TODO: adjustment unnecessary?
-    const thetaStart = rcMath.adjustAngleTo360(playerAngle - resolution.width / 2 / 10); // TODO: explain 10 const.
-    for (let columnNum = 0; columnNum < resolution.width; columnNum++) {
-        // Origin is pointing vertically up even though y increases downwards.
-        const thetaRay = rcMath.adjustAngleTo360(thetaStart + columnNum / 10); // TODO: explain 10.
-        if (thetaRay === 0 || thetaRay === 180) {
-            // TODO: ywalk special case.
+    // For each column of pixels on the monitor...
+    for (let pixelColumnNum = 0; pixelColumnNum < resolution.width; pixelColumnNum++) {
+        // Cast a ray from the field of view. Note: theta 0 is pointing up, y increases down.
+        const thetaRay = thetaLeftmostFoV + pixelColumnNum / 10; // constant from field of view
+        const rayXDirMultiplier = Math.sign(rcMath.sinDeg(thetaRay));
+        const rayYDirMultiplier = -Math.sign(rcMath.cosDeg(thetaRay)); // negative b/c y points down.
+        if (rayYDirMultiplier === 0) { // ray is vertical.
             continue;
-        } else if (thetaRay === 90 || thetaRay === 270) {
-            // TODO: xwalk special case.
+        } else if (rayXDirMultiplier === 0) { // ray is horizontal.
             continue;
         }
 
-        let xintercept = getFirstRayToGridXIntercept(playerLoc, thetaRay);
-        let yintercept = getFirstRayToGridYIntercept(playerLoc, thetaRay);
         // TODO: this shouldn't be current location. infinite loop.
+        let xintercept = getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier);
+        let yintercept = getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier);
+        const xinterceptSteps = getXInterceptSteps(thetaRay, rayXDirMultiplier);
+        const yinterceptSteps = getYInterceptSteps(thetaRay, rayYDirMultiplier);
 
-        const xinterceptSteps = getXInterceptSteps(playerLoc, xintercept, thetaRay);
-        const yinterceptSteps = getYInterceptSteps(playerLoc, xintercept, thetaRay);
-
+        // Cast the ray to each point in the grid until we intersect a wall.
         while (true) {
             const xinterceptDist = rcMath.getDistance(xintercept, playerLoc);
             const yinterceptDist = rcMath.getDistance(yintercept, playerLoc);
@@ -82,8 +81,8 @@ function drawWalls(ctx, resolution, playerLoc, playerAngle) {
             if (isWall(closestIntercept)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
                 const isIntersectX  = xinterceptDist < yinterceptDist;
-                const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, playerAngle, thetaRay);
-                drawWall(ctx, resolution, columnNum, wallDist, isIntersectX); // TODO: name collision
+                const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, thetaRay);
+                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectX);
                 break;
             }
 
@@ -131,18 +130,18 @@ function drawWall(ctx, resolution, columnNum, distance, isIntersectX) {
     ctx.fillRect(/* x */ columnNum, /* y */ y0, /* width */ 1, wallHeight);
 }
 
-function getXInterceptSteps(playerLoc, xintercept, thetaRay) {
-    assert(thetaRay != 0 && thetaRay != 180); // TODO: is never negative? Also Math.abs(angle) % 180
-    const dx = BLOCK_SIZE * Math.sign(xintercept.x - playerLoc.x);
+function getXInterceptSteps(thetaRay, rayXDirMultiplier) {
+    assert(rayXDirMultiplier !== 0); // line is vertical.
+    const dx = BLOCK_SIZE * rayXDirMultiplier;
     return {
         xStep: dx,
         yStep: -dx / rcMath.tanDeg(thetaRay),
     };
 }
 
-function getYInterceptSteps(playerLoc, xintercept, thetaRay) {
-    assert(thetaRay != 90 && thetaRay != 270);
-    const dy = BLOCK_SIZE * Math.sign(xintercept.y - playerLoc.y);
+function getYInterceptSteps(thetaRay, rayYDirMultiplier) {
+    assert(rayYDirMultiplier !== 0); // line is horizontal.
+    const dy = BLOCK_SIZE * rayYDirMultiplier;
     return {
         xStep: -dy * rcMath.tanDeg(thetaRay),
         yStep: dy,
@@ -153,12 +152,11 @@ function getYInterceptSteps(playerLoc, xintercept, thetaRay) {
  * @param {import("./rcMath").Point} playerLoc
  * @param {number} thetaRay
  */
-function getFirstRayToGridXIntercept(playerLoc, thetaRay) {
-    // TODO: should we handle negative & overflow angles?
-    assert(thetaRay != 0 && thetaRay != 180); // TODO: is always negative?
+function getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier) {
+    assert(rayXDirMultiplier !== 0); // line is vertical.
 
     // We're "floor/ceil"ing playerX to the nearest gridline, i.e. a possible wall location.
-    const roundingFn = thetaRay < 180 ? Math.ceil : Math.floor;
+    const roundingFn = rayXDirMultiplier === 1 ? Math.ceil : Math.floor;
     const xIntercept = roundingFn(playerLoc.x / BLOCK_SIZE) * BLOCK_SIZE;
 
     const dx = xIntercept - playerLoc.x;
@@ -172,11 +170,11 @@ function getFirstRayToGridXIntercept(playerLoc, thetaRay) {
  * @param {import("./rcMath").Point} playerLoc
  * @param {number} thetaRay
  */
-function getFirstRayToGridYIntercept(playerLoc, thetaRay) {
-    assert(thetaRay != 90 && thetaRay != 270);
+function getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier) {
+    assert(rayYDirMultiplier !== 0); // line is horizontal.
 
     // We're "floor/ceil"ing playerY to the nearest gridline, i.e. a possible wall location.
-    const roundingFn = thetaRay < 90 || thetaRay > 270 ? Math.floor : Math.ceil;
+    const roundingFn = rayYDirMultiplier === 1 ? Math.ceil : Math.floor;
     const yIntercept = roundingFn(playerLoc.y / BLOCK_SIZE) * BLOCK_SIZE;
 
     const dy = yIntercept - playerLoc.y;
