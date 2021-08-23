@@ -13,11 +13,9 @@ known perf improvements:
 - don't need to calculate distance to see which intersect is closest. Can take sign & use x or y.
 */
 
-import { WALL_HEIGHT_SCALE_FACTOR } from './config.js';
+import { BLOCK_SIZE, WALL_HEIGHT_SCALE_FACTOR } from './config.js';
 import * as rcMath from './rcMath.js';
 import { getWallDist } from "./rendererWallDistImpl.js";
-
-const BLOCK_SIZE = 8; // ft.
 
 /**
  * @param {CanvasRenderingContext2D} ctx

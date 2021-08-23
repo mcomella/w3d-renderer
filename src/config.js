@@ -15,3 +15,8 @@ export const RESOLUTION = {
  * At 10ft away, the height should be resolution.height. resolution.height = X / 10. X = resolution.height * 10.
  */
 export const WALL_HEIGHT_SCALE_FACTOR = RESOLUTION.height * 2; // Note: formerly 2000.
+
+/**
+ * The size of both dimensions of the walls (they're placed as blocks).
+ */
+export const BLOCK_SIZE = 8 // ft
