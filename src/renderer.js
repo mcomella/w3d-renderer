@@ -10,6 +10,7 @@ known perf improvements:
 - getContext('2d', { alpha: false })
 - https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial
 - x/yInterceptDist doesn't need hypot. Can just use x/y coordinates? e.g. if angle is 0-90, then smallest x is closest.
+- don't need to calculate distance to see which intersect is closest. Can take sign & use x or y.
 */
 
 import { WALL_HEIGHT_SCALE_FACTOR } from './config.js';
@@ -66,7 +67,6 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
             continue;
         }
 
-        // TODO: this shouldn't be current location. infinite loop.
         let xintercept = getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier);
         let yintercept = getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier);
         const xinterceptSteps = getXInterceptSteps(thetaRay, rayXDirMultiplier);
@@ -76,28 +76,21 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
         while (true) {
             const xinterceptDist = rcMath.getDistance(xintercept, playerLoc);
             const yinterceptDist = rcMath.getDistance(yintercept, playerLoc);
-            const closestIntercept = (xinterceptDist < yinterceptDist) ? xintercept : yintercept; // TODO: okay what happens if equal?
+            const closestIntercept = (xinterceptDist < yinterceptDist) ? xintercept : yintercept;
+            const isIntersectX  = xinterceptDist < yinterceptDist;
 
             if (isWall(closestIntercept)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
-                const isIntersectX  = xinterceptDist < yinterceptDist;
                 const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, thetaRay);
                 drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectX);
                 break;
             }
 
-            // TODO: assert not longer than map? Just in case I f'd up. No infinite loop. is isWall?
-            // Otherwise, get next x/y (why?). b/c we're stepping.
-            if (closestIntercept === xintercept) {
-                xintercept = {
-                    x: xintercept.x + xinterceptSteps.xStep,
-                    y: xintercept.y + xinterceptSteps.yStep,
-                };
+            // TODO: assert not longer than map to avoid infinite loops?
+            if (isIntersectX) {
+                xintercept = {x: xintercept.x + xinterceptSteps.xStep, y: xintercept.y + xinterceptSteps.yStep};
             } else {
-                yintercept = { // TODO: can be func.
-                    x: yintercept.x + yinterceptSteps.xStep,
-                    y: yintercept.y + yinterceptSteps.yStep,
-                };
+                yintercept = {x: yintercept.x + yinterceptSteps.xStep, y: yintercept.y + yinterceptSteps.yStep};
             }
         }
     }
