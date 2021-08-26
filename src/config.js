@@ -20,3 +20,5 @@ export const WALL_HEIGHT_SCALE_FACTOR = RESOLUTION.height * 2; // Note: formerly
  * The size of both dimensions of the walls (they're placed as blocks).
  */
 export const BLOCK_SIZE = 8 // ft
+
+export const WALL_TEXTURE_SIZE = 64;

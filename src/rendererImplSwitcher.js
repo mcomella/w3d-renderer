@@ -33,6 +33,7 @@ function getWallDistW3d(closestInterceptDist, interceptLoc, playerLoc, playerAng
 ///////////////////////////////////////////////////////////////////////////////
 export const drawWallImpl = drawTexturedWallOneColumn;
 
+// eslint-disable-next-line no-unused-vars
 function drawTexturedWallOneColumn(ctx, isIntersectX, columnNum, y0, wallHeight, lightTexture, darkTexture) {
     const texture = isIntersectX ? lightTexture : darkTexture;
     const scaleMultipiler = texture.length / 4 / wallHeight; // 4 to account for RGBA.
@@ -59,6 +60,7 @@ function drawTexturedWallOneColumn(ctx, isIntersectX, columnNum, y0, wallHeight,
 /**
  * @param {CanvasRenderingContext2D} ctx
  */
+// eslint-disable-next-line no-unused-vars
 function drawWallNoTexture(ctx, isIntersectX, columnNum, y0, wallHeight) {
     ctx.fillStyle = isIntersectX ? '#00f' : '#00a';
     ctx.fillRect(/* x */ columnNum, /* y */ y0, /* width */ 1, /* height */ wallHeight);
