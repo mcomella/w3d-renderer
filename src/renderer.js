@@ -11,11 +11,17 @@ known perf improvements:
 - https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial
 - x/yInterceptDist doesn't need hypot. Can just use x/y coordinates? e.g. if angle is 0-90, then smallest x is closest.
 - don't need to calculate distance to see which intersect is closest. Can take sign & use x or y.
+- Allocation for createImageData in render loop.
 */
 
 import { BLOCK_SIZE, WALL_HEIGHT_SCALE_FACTOR } from './config.js';
 import * as rcMath from './rcMath.js';
-import { getWallDist } from "./rendererWallDistImpl.js";
+import { getWallDist, drawWallImpl } from "./rendererImplSwitcher.js";
+
+// Changing the color between x/y intersections changes the lighting, improving
+// the perception of perspective.
+const lightTexture = generateTexture(true);
+const darkTexture = generateTexture(false);
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -108,11 +114,7 @@ function drawWall(ctx, resolution, columnNum, distance, isIntersectX) {
     // Note: for impl simplicity, this draws outside the canvas. Is that a (perf) problem?
     const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / distance);
     const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
-
-    // Changing the color between x/y intersections changes the lighting, improving
-    // the perception of perspective.
-    ctx.fillStyle = isIntersectX ? '#00f' : '#00a';
-    ctx.fillRect(/* x */ columnNum, /* y */ y0, /* width */ 1, wallHeight);
+    drawWallImpl(ctx, isIntersectX, columnNum, y0, wallHeight, lightTexture, darkTexture);
 }
 
 function getXInterceptSteps(thetaRay, rayXDirMultiplier) {
@@ -181,6 +183,27 @@ function getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier) {
         x: -dy * rcMath.tanDeg(thetaRay) + playerLoc.x, // derived via soh-cah-TOA.
         y: yIntercept,
     };
+}
+
+function generateTexture(isLight) {
+    const solidBlue = isLight ? 0xFF : 0xAA;
+    const texture = new Uint8ClampedArray(64 * 4);
+    for (let i = 0; i < texture.length; i += 4) {
+        if (i / 4 % 8 !== 0) {
+            // Solid
+            texture[i] = 0x00;
+            texture[i + 1] = 0x00;
+            texture[i + 2] = solidBlue;
+            texture[i + 3] = 0xFF;
+        } else {
+            // Grout
+            texture[i] = 0xAA;
+            texture[i + 1] = 0xAA;
+            texture[i + 2] = 0xAA;
+            texture[i + 3] = 0xFF;
+        }
+    }
+    return texture;
 }
 
 export const testables = {

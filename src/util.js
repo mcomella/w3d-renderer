@@ -1,8 +1,6 @@
-export function assert(statement, msg) {
+export function assert(statement, msgProvider) {
     if (!statement) {
-        if (!msg) {
-            msg = '';
-        }
-        throw `assertion failure: ${msg}`;
+        const msg = msgProvider ? msgProvider() : 'no description provided';
+        throw `assertion failure: ${msg}.`;
     }
 }
