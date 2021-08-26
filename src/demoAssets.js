@@ -1,4 +1,7 @@
 import { WALL_TEXTURE_SIZE } from "./config.js";
+import { assert } from "./util.js";
+
+export const demoMap = generateMap();
 
 // Changing the color between x/y intersections changes the lighting, improving
 // the perception of perspective.
@@ -78,4 +81,89 @@ function drawColor(arr, i, r, g, b) {
     arr[i + 1] = g;
     arr[i + 2] = b;
     arr[i + 3] = 0xFF;
+}
+
+/**
+ * Returns a map where map[i] returns a row. In each value:
+ * - 'w' = wall
+ * - '' = empty space
+ *
+ * @returns {string[][]}
+ */
+function generateMap() {
+    const mapStr = `
+wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+w                                                              w
+wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww`;
+
+    const map = mapStr.split('\n').slice(1) // slice to remove empty first row.
+    assert(map.length === 64, () => `unexpected map length ${map.length}`);
+
+    for (let i = 0; i < map.length; i++) {
+        map[i] = map[i].split('');
+        assert(map[i].length === 64, () => `unexpected row length ${map[i].length}`);
+    }
+
+    return map;
 }
