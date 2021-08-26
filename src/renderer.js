@@ -15,7 +15,7 @@ known perf improvements:
 */
 
 import { BLOCK_SIZE, WALL_HEIGHT_SCALE_FACTOR } from './config.js';
-import { lightWallTexture, darkWallTexture } from './demoAssets.js';
+import { demoLightTexture, demoDarkTexture } from './demoAssets.js';
 import * as rcMath from './rcMath.js';
 import { getWallDist, drawWallImpl } from "./rendererImplSwitcher.js";
 
@@ -76,7 +76,7 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
             if (isWall(closestIntercept)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
                 const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, thetaRay);
-                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectX);
+                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectX, closestIntercept);
                 break;
             }
 
@@ -106,11 +106,11 @@ function isWall(location) {
  * @param {number} columnNum
  * @param {number} distance
  */
-function drawWall(ctx, resolution, columnNum, distance, isIntersectX) {
+function drawWall(ctx, resolution, columnNum, distance, isIntersectX, intercept) {
     // Note: for impl simplicity, this draws outside the canvas. Is that a (perf) problem?
     const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / distance);
     const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
-    drawWallImpl(ctx, isIntersectX, columnNum, y0, wallHeight, lightWallTexture, darkWallTexture);
+    drawWallImpl(ctx, isIntersectX, columnNum, y0, wallHeight, demoLightTexture, demoDarkTexture, intercept);
 }
 
 function getXInterceptSteps(thetaRay, rayXDirMultiplier) {

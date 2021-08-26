@@ -1,3 +1,4 @@
+import { BLOCK_SIZE } from './config.js';
 import * as rcMath from './rcMath.js';
 import { assert } from './util.js';
 
@@ -31,7 +32,41 @@ function getWallDistW3d(closestInterceptDist, interceptLoc, playerLoc, playerAng
 ///////////////////////////////////////////////////////////////////////////////
 // Implementations for drawWallImpl: we draw the wall, perhaps textured.
 ///////////////////////////////////////////////////////////////////////////////
-export const drawWallImpl = drawTexturedWallOneColumn;
+export const drawWallImpl = drawTexturedWall;
+
+// eslint-disable-next-line no-unused-vars
+function drawTexturedWall(ctx, isIntersectX, columnNum, y0, wallHeight, lightTexture, darkTexture, intercept) {
+    const texture = isIntersectX ? lightTexture : darkTexture;
+
+    // Find which column of the wall to draw.
+    const interceptVal = !isIntersectX ? intercept.x : intercept.y;
+    const intersectionRatio = interceptVal % BLOCK_SIZE / BLOCK_SIZE; // e.g. if we hit the center = 0.5
+    const columnIndexToDraw = Math.floor(texture.length * intersectionRatio);
+    assert(columnIndexToDraw < texture.length, () =>
+            `columnIndex ${columnIndexToDraw} exceeded texture size ${texture.length}`);
+    const textureColumn = texture[columnIndexToDraw];
+
+    const imageData = ctx.createImageData(1, wallHeight);
+    const data = imageData.data;
+
+    // Scale texture vertically to adapt to wall height.
+    const scaleMultipiler = textureColumn.length / 4 / wallHeight; // 4 to account for RGBA.
+    function getTextureIndex(i) {
+        // Alternative algo: 1) ceil. 2) split in half & interpolate central point.
+        return Math.floor((i / 4) * scaleMultipiler) * 4;
+    }
+    assert(getTextureIndex(data.length - 3) < textureColumn.length, () =>
+            `will read after texture array ${data.length - 3} ${textureColumn.length} ${scaleMultipiler}`);
+
+    for (let i = 0; i < data.length; i += 4) {
+        const textureIndex = getTextureIndex(i);
+        data[i] = textureColumn[textureIndex];
+        data[i + 1] = textureColumn[textureIndex + 1];
+        data[i + 2] = textureColumn[textureIndex + 2];
+        data[i + 3] = textureColumn[textureIndex + 3];
+    }
+    ctx.putImageData(imageData, columnNum, y0);
+}
 
 // eslint-disable-next-line no-unused-vars
 function drawTexturedWallOneColumn(ctx, isIntersectX, columnNum, y0, wallHeight, lightTexture, darkTexture) {
