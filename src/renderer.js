@@ -71,7 +71,7 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
             const closestIntercept = (xinterceptDist < yinterceptDist) ? xintercept : yintercept;
             const isIntersectOnXGridLine  = xinterceptDist < yinterceptDist;
 
-            if (doesLocationIntersectWall(demoMap, closestIntercept, isIntersectOnXGridLine, ray)) {
+            if (doesLocationIntersectWall(demoMap.tiles, closestIntercept, isIntersectOnXGridLine, ray)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
                 const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, ray.theta);
                 drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectOnXGridLine, closestIntercept);
@@ -100,6 +100,7 @@ function doesLocationIntersectWall(map, location, isIntersectOnXGridLine, ray) {
     // e.g. (1, 2.3): we floor to conform to the grid.
     const mapSpaceLoc = {x: Math.floor(location.x / BLOCK_SIZE), y: Math.floor(location.y / BLOCK_SIZE)};
 
+    // TODO: I don't think we need to check [y][x] if we're facing negative but I didn't get it working.
     assert(mapSpaceLoc.x < map.length, () => `expected < ${map.length}. got ${mapSpaceLoc.x}`);
     assert(mapSpaceLoc.y < map.length, () => `expected < ${map.length}. got ${mapSpaceLoc.y}`);
     return map[mapSpaceLoc.y][mapSpaceLoc.x] === 'w' ||
@@ -120,7 +121,9 @@ function doesLocationIntersectWall(map, location, isIntersectOnXGridLine, ray) {
  */
 function drawWall(ctx, resolution, columnNum, distance, isIntersectOnXGridLine, intercept) {
     // Note: for impl simplicity, this draws outside the canvas. Is that a (perf) problem?
-    const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / distance);
+    // Seems like yes, e.g. if we're right right next to a wall. But we need to know actual height
+    // so we can texture it correctly.
+    const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / Math.max(distance, 0.1));
     const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
     drawWallImpl(ctx, isIntersectOnXGridLine, columnNum, y0, wallHeight, demoLightTexture, demoDarkTexture, intercept);
 }

@@ -1,4 +1,5 @@
-import { RESOLUTION } from "./config.js";
+import { demoMap } from "./demoAssets.js";
+import { BLOCK_SIZE, RESOLUTION } from "./config.js";
 import { onKey, nextInputState } from "./input.js";
 import { renderFrame } from "./renderer.js";
 import { updateWorld } from "./world.js";
@@ -9,8 +10,9 @@ let isRendering = true;
 
 /** @type {import("./world").WorldState} */
 let worldState = {
-    playerLoc: { x: 15, y: 33 },
-    playerAngle: 180,
+    playerLoc: {x: demoMap.playerStartingLoc.x * BLOCK_SIZE + BLOCK_SIZE / 2, // center in space.
+            y: demoMap.playerStartingLoc.y * BLOCK_SIZE + BLOCK_SIZE / 2},
+    playerAngle: demoMap.playerStartingTheta,
 };
 
 function configureBody() {

@@ -87,22 +87,20 @@ function drawColor(arr, i, r, g, b) {
  * Returns a map where map[i] returns a row. In each value:
  * - 'w' = wall
  * - '' = empty space
- *
- * @returns {string[][]}
  */
 function generateMap() {
     const mapStr = `
 wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
-w                                                              w
-w                                                              w
-w                                                              w
-w                                                              w
-w                                                              w
-w                                                              w
-w                                                              w
-w                                                              w
-w                                                              w
-w                                                              w
+w                         wp  w                                w
+w                         ww ww                                w
+w                         w   w                                w
+w                         ww ww                                w
+w                         w   w                                w
+w                     wwwwww wwwwww                            w
+w                     w           w                            w
+w                     w                                        w
+w                     w           w                            w
+w                     wwwwwwwwwwwww                            w
 w                                                              w
 w                                                              w
 w                                                              w
@@ -157,13 +155,25 @@ w                                                              w
 w                                                              w
 wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww`;
 
-    const map = mapStr.split('\n').slice(1) // slice to remove empty first row.
-    assert(map.length === 64, () => `unexpected map length ${map.length}`);
+    const tiles = mapStr.split('\n').slice(1) // slice to remove empty first row.
+    assert(tiles.length === 64, () => `unexpected map length ${tiles.length}`);
 
-    for (let i = 0; i < map.length; i++) {
-        map[i] = map[i].split('');
-        assert(map[i].length === 64, () => `unexpected row length ${map[i].length}`);
+    let playerStartingLoc;
+    for (let i = 0; i < tiles.length; i++) {
+        tiles[i] = tiles[i].split('');
+        assert(tiles[i].length === 64, () => `unexpected row length ${tiles[i].length}`);
+
+        for (let j = 0; j < tiles[i].length; j++) {
+            if (tiles[i][j] === 'p') {
+                playerStartingLoc = {x: j, y: i};
+            }
+        }
     }
 
-    return map;
+    assert(playerStartingLoc, 'player starting location should be set');
+    return {
+        tiles: tiles,
+        playerStartingLoc: playerStartingLoc,
+        playerStartingTheta: 90,
+    }
 }
