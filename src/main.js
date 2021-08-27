@@ -26,6 +26,16 @@ function configureBody() {
         stopRenderButton.disabled = true;
     });
 
+    const uploadButton = document.querySelector('#upload');
+    uploadButton.addEventListener('change', () => {
+        console.log(uploadButton.files)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            console.log(e.target.result);
+        };
+        reader.readAsArrayBuffer(uploadButton.files[0]);
+    });
+
     // Adding key events to body seems more natural than making canvas focusable.
     const body = document.body;
     body.addEventListener('keydown', (e) => { onKey(e.code, /* isDown */ true); });
