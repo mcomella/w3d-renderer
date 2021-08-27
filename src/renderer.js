@@ -15,9 +15,10 @@ known perf improvements:
 */
 
 import { BLOCK_SIZE, WALL_HEIGHT_SCALE_FACTOR } from './config.js';
-import { demoLightTexture, demoDarkTexture } from './demoAssets.js';
+import { demoMap, demoLightTexture, demoDarkTexture } from './demoAssets.js';
 import * as rcMath from './rcMath.js';
 import { getWallDist, drawWallImpl } from "./rendererImplSwitcher.js";
+import { assert } from './util.js';
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -57,31 +58,28 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
     // For each column of pixels on the monitor...
     for (let pixelColumnNum = 0; pixelColumnNum < resolution.width; pixelColumnNum++) {
         // Cast a ray from the field of view. Note: theta 0 is pointing up, y increases down.
-        const thetaRay = thetaLeftmostFoV + pixelColumnNum / 10; // constant from field of view
-        const rayXDirMultiplier = Math.sign(rcMath.sinDeg(thetaRay));
-        const rayYDirMultiplier = -Math.sign(rcMath.cosDeg(thetaRay)); // negative b/c y points down.
-
-        let xintercept = getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier);
-        let yintercept = getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier);
-        const xinterceptSteps = getXInterceptSteps(thetaRay, rayXDirMultiplier);
-        const yinterceptSteps = getYInterceptSteps(thetaRay, rayYDirMultiplier);
+        const ray = new Ray(thetaLeftmostFoV + pixelColumnNum / 10);
+        let xintercept = getFirstRayToGridXIntercept(playerLoc, ray);
+        let yintercept = getFirstRayToGridYIntercept(playerLoc, ray);
+        const xinterceptSteps = getXInterceptSteps(ray);
+        const yinterceptSteps = getYInterceptSteps(ray);
 
         // Cast the ray to each point in the grid until we intersect a wall.
         while (true) {
             const xinterceptDist = rcMath.getDistance(xintercept, playerLoc);
             const yinterceptDist = rcMath.getDistance(yintercept, playerLoc);
             const closestIntercept = (xinterceptDist < yinterceptDist) ? xintercept : yintercept;
-            const isIntersectX  = xinterceptDist < yinterceptDist;
+            const isIntersectOnXGridLine  = xinterceptDist < yinterceptDist;
 
-            if (isWall(closestIntercept)) {
+            if (doesLocationIntersectWall(demoMap, closestIntercept, isIntersectOnXGridLine, ray)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
-                const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, thetaRay);
-                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectX, closestIntercept);
+                const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, ray.theta);
+                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectOnXGridLine, closestIntercept);
                 break;
             }
 
             // TODO: assert not longer than map to avoid infinite loops?
-            if (isIntersectX) {
+            if (isIntersectOnXGridLine) {
                 xintercept = {x: xintercept.x + xinterceptSteps.xStep, y: xintercept.y + xinterceptSteps.yStep};
             } else {
                 yintercept = {x: yintercept.x + yinterceptSteps.xStep, y: yintercept.y + yinterceptSteps.yStep};
@@ -90,14 +88,28 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
     }
 }
 
-// TODO: name.
-function isWall(location) {
-    if (location.x == 0 || location.x == 64) {
-        return true;
-    } else if (location.y == 0 || location.y == 64) {
-        return true;
-    }
-    return false;
+/**
+ * @param {string[][]} map
+ * @param {import("./config").Point} location
+ * @param {boolean} isIntersectOnXGridLine
+ * @param {Ray} ray
+ * @returns {boolean}
+ */
+function doesLocationIntersectWall(map, location, isIntersectOnXGridLine, ray) {
+    // An intersection will be one grid point and one in between grid point,
+    // e.g. (1, 2.3): we floor to conform to the grid.
+    const mapSpaceLoc = {x: Math.floor(location.x / BLOCK_SIZE), y: Math.floor(location.y / BLOCK_SIZE)};
+
+    assert(mapSpaceLoc.x < map.length, () => `expected < ${map.length}. got ${mapSpaceLoc.x}`);
+    assert(mapSpaceLoc.y < map.length, () => `expected < ${map.length}. got ${mapSpaceLoc.y}`);
+    return map[mapSpaceLoc.y][mapSpaceLoc.x] === 'w' ||
+            // Each tile in the map object is a block - it has four walls - so we need to check for
+            // intersection with all four. If we're facing in a negative direction, we need to project
+            // the tile forward; this comes for free in a positive direction.
+            (isIntersectOnXGridLine && ray.xDirMultiplier < 0 &&
+                    mapSpaceLoc.x > 0 && map[mapSpaceLoc.y][mapSpaceLoc.x - 1] === 'w') ||
+            (!isIntersectOnXGridLine && ray.yDirMultiplier < 0 &&
+                    mapSpaceLoc.y > 0 && map[mapSpaceLoc.y - 1][mapSpaceLoc.x] === 'w');
 }
 
 /**
@@ -106,79 +118,85 @@ function isWall(location) {
  * @param {number} columnNum
  * @param {number} distance
  */
-function drawWall(ctx, resolution, columnNum, distance, isIntersectX, intercept) {
+function drawWall(ctx, resolution, columnNum, distance, isIntersectOnXGridLine, intercept) {
     // Note: for impl simplicity, this draws outside the canvas. Is that a (perf) problem?
     const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / distance);
     const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
-    drawWallImpl(ctx, isIntersectX, columnNum, y0, wallHeight, demoLightTexture, demoDarkTexture, intercept);
+    drawWallImpl(ctx, isIntersectOnXGridLine, columnNum, y0, wallHeight, demoLightTexture, demoDarkTexture, intercept);
 }
 
-function getXInterceptSteps(thetaRay, rayXDirMultiplier) {
-    if (rayXDirMultiplier === 0) {
+function getXInterceptSteps(ray) {
+    if (ray.xDirMultiplier === 0) {
         // Line is vertical and this method would fail: return no changes to our dummy position.
         return {xStep: 0, yStep: 0};
     }
 
-    const dx = BLOCK_SIZE * rayXDirMultiplier;
+    const dx = BLOCK_SIZE * ray.xDirMultiplier;
     return {
         xStep: dx,
-        yStep: -dx / rcMath.tanDeg(thetaRay),
+        yStep: -dx / rcMath.tanDeg(ray.theta),
     };
 }
 
-function getYInterceptSteps(thetaRay, rayYDirMultiplier) {
-    if (rayYDirMultiplier === 0) {
+function getYInterceptSteps(ray) {
+    if (ray.yDirMultiplier === 0) {
         // Line is horizontal and this method would fail: return no changes to our dummy position.
         return {xStep: 0, yStep: 0};
     }
 
-    const dy = BLOCK_SIZE * rayYDirMultiplier;
+    const dy = BLOCK_SIZE * ray.yDirMultiplier;
     return {
-        xStep: -dy * rcMath.tanDeg(thetaRay),
+        xStep: -dy * rcMath.tanDeg(ray.theta),
         yStep: dy,
     };
 }
 
 /**
  * @param {import("./rcMath").Point} playerLoc
- * @param {number} thetaRay
+ * @param {Ray} ray
  */
-function getFirstRayToGridXIntercept(playerLoc, thetaRay, rayXDirMultiplier) {
-    if (rayXDirMultiplier === 0) {
+function getFirstRayToGridXIntercept(playerLoc, ray) {
+    if (ray.xDirMultiplier === 0) {
         // Line is vertical and this method would fail: return a large value so yIntercept will always be closer.
         return {x: Number.MAX_VALUE / 2, y: Number.MAX_VALUE / 2};
     }
 
     // We're "floor/ceil"ing playerX to the nearest gridline, i.e. a possible wall location.
-    const roundingFn = rayXDirMultiplier === 1 ? Math.ceil : Math.floor;
+    const roundingFn = ray.xDirMultiplier === 1 ? Math.ceil : Math.floor;
     const xIntercept = roundingFn(playerLoc.x / BLOCK_SIZE) * BLOCK_SIZE;
 
     const dx = xIntercept - playerLoc.x;
     return {
         x: xIntercept,
-        y: -dx / rcMath.tanDeg(thetaRay) + playerLoc.y, // derived via soh-cah-TOA.
+        y: -dx / rcMath.tanDeg(ray.theta) + playerLoc.y, // derived via soh-cah-TOA.
     };
 }
 
 /**
  * @param {import("./rcMath").Point} playerLoc
- * @param {number} thetaRay
+ * @param {Ray} ray
  */
-function getFirstRayToGridYIntercept(playerLoc, thetaRay, rayYDirMultiplier) {
-    if (rayYDirMultiplier === 0) {
+function getFirstRayToGridYIntercept(playerLoc, ray) {
+    if (ray.yDirMultiplier === 0) {
         // Line is horizontal and this method would fail: return a large value so yIntercept will always be closer.
         return {x: Number.MAX_VALUE / 2, y: Number.MAX_VALUE / 2};
     }
 
     // We're "floor/ceil"ing playerY to the nearest gridline, i.e. a possible wall location.
-    const roundingFn = rayYDirMultiplier === 1 ? Math.ceil : Math.floor;
+    const roundingFn = ray.yDirMultiplier === 1 ? Math.ceil : Math.floor;
     const yIntercept = roundingFn(playerLoc.y / BLOCK_SIZE) * BLOCK_SIZE;
 
     const dy = yIntercept - playerLoc.y;
     return {
-        x: -dy * rcMath.tanDeg(thetaRay) + playerLoc.x, // derived via soh-cah-TOA.
+        x: -dy * rcMath.tanDeg(ray.theta) + playerLoc.x, // derived via soh-cah-TOA.
         y: yIntercept,
     };
+}
+
+function Ray(theta) {
+    this.theta = theta; // constant from field of view
+    this.xDirMultiplier = Math.sign(rcMath.sinDeg(theta));
+    this.yDirMultiplier = -Math.sign(rcMath.cosDeg(theta)); // negative b/c y points down.
 }
 
 export const testables = {
