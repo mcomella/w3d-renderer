@@ -125,8 +125,7 @@ function drawWall(ctx, resolution, columnNum, distance, isIntersectOnXGridLine, 
     // so we can texture it correctly.
     const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / Math.max(distance, 0.1));
     const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
-
-    // TODO: restore demo textures.
+    // const texture = isIntersectOnXGridLine ? demoLightTexture : demoDarkTexture;
     const texture = isIntersectOnXGridLine ? textures[0] : textures[1];
     drawWallImpl(ctx, isIntersectOnXGridLine, columnNum, y0, wallHeight, texture, intercept);
 }

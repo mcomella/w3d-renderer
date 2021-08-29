@@ -1,4 +1,4 @@
-import { WALL_TEXTURE_SIZE_PX } from "./config.js";
+import { WALL_TEXTURE_SIZE_BYTES, WALL_TEXTURE_SIZE_PX } from "./config.js";
 import { assert } from "./util.js";
 
 export const demoMap = generateMap();
@@ -9,43 +9,38 @@ export const demoLightTexture = generateTexture(0xFF);
 export const demoDarkTexture = generateTexture(0xAA);
 
 /**
- * Returns a texture that is Uint8ClampedArray[] where:
- * - texture[i] returns a column of pixels as a UInt8ClampedArray
- * - texture[i][j] returns is a specific RGBA in a pixel
+ * Returns a texture that is a 1D Uint8ClampedArray where unconventionally
+ * column 0 is represented in index 0-texture_size_px (like w3d textures).
  *
  * It tries to mimic a wall but it *is* programmer art. :)
  *
  * @param {number} solidBlue
- * @returns {Uint8ClampedArray[]}
+ * @returns {Uint8ClampedArray}
  */
 function generateTexture(solidBlue) {
-    const texture = new Array(WALL_TEXTURE_SIZE_PX);
+    const texture = new Uint8ClampedArray(WALL_TEXTURE_SIZE_BYTES * WALL_TEXTURE_SIZE_BYTES);
 
     // Fill solid.
-    for (let c = 0; c < texture.length; c++) {
-        const column = new Uint8ClampedArray(WALL_TEXTURE_SIZE_PX * 4); // 4 for RGBA
-        texture[c] = column;
-        for (let p = 0; p < column.length; p += 4) {
-            drawColor(column, p, 0x00, 0x00, solidBlue);
-        }
+    for (let i = 0; i < texture.length; i += 4) {
+        drawColor(texture, i, 0x00, 0x00, solidBlue);
     }
 
-    function drawGroutHorizontal(column, pxIndex) {
-        drawColor(column, pxIndex - 4, 0xBB, 0xBB, 0xBB);
-        drawColor(column, pxIndex, 0xAA, 0xAA, 0xAA);
-        drawColor(column, pxIndex + 4, 0xBB, 0xBB, 0xBB);
+    function drawGroutHorizontal(arr, pxIndex) {
+        drawColor(arr, pxIndex - 4, 0xBB, 0xBB, 0xBB);
+        drawColor(arr, pxIndex, 0xAA, 0xAA, 0xAA);
+        drawColor(arr, pxIndex + 4, 0xBB, 0xBB, 0xBB);
     }
 
     // Add horizontal lines all the way across.
-    for (let c = 0; c < texture.length; c++) {
-        const column = texture[c];
-        drawGroutHorizontal(column, 16 * 4);
-        drawGroutHorizontal(column, 32 * 4);
-        drawGroutHorizontal(column, 48 * 4);
+    for (let columnNum = 0; columnNum < WALL_TEXTURE_SIZE_PX; columnNum++) {
+        drawGroutHorizontal(texture, 16 * 4 + columnNum * WALL_TEXTURE_SIZE_BYTES);
+        drawGroutHorizontal(texture, 32 * 4 + columnNum * WALL_TEXTURE_SIZE_BYTES);
+        drawGroutHorizontal(texture, 48 * 4 + columnNum * WALL_TEXTURE_SIZE_BYTES);
     }
 
-    function drawGroutVertical(texture, colIndex, pxIndex) {
-        drawColor(texture[colIndex], pxIndex, 0xAA, 0xAA, 0xAA);
+    function drawGroutVertical(texture, columnNum, pxIndex) {
+        const index = columnNum * WALL_TEXTURE_SIZE_BYTES + pxIndex;
+        drawColor(texture, index, 0xAA, 0xAA, 0xAA);
     }
 
     // Add vertical lines at odd intervals.
