@@ -26,9 +26,9 @@ import { assert } from './util.js';
  * @param {import("./rcMath").Point} playerLoc
  * @param {number} playerAngle
  */
-export function renderFrame(ctx, resolution, playerLoc, playerAngle) {
+export function renderFrame(ctx, resolution, playerLoc, playerAngle, textures) {
     clearFrame(ctx, resolution);
-    drawWalls(ctx, resolution, playerLoc, playerAngle);
+    drawWalls(ctx, resolution, playerLoc, playerAngle, textures);
 }
 
 /**
@@ -51,7 +51,7 @@ function clearFrame(ctx, resolution) {
  * @param {import("./rcMath").Point} playerLoc
  * @param {number} thetaPlayer
  */
-function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
+function drawWalls(ctx, resolution, playerLoc, thetaPlayer, textures) {
     // This expression hardcodes the same field of view as in w3d (I think).
     const thetaLeftmostFoV = thetaPlayer - resolution.width / 2 / 10;
 
@@ -74,7 +74,7 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer) {
             if (doesLocationIntersectWall(demoMap.tiles, closestIntercept, isIntersectOnXGridLine, ray)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
                 const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, ray.theta);
-                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectOnXGridLine, closestIntercept);
+                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectOnXGridLine, closestIntercept, textures);
                 break;
             }
 
@@ -119,13 +119,16 @@ function doesLocationIntersectWall(map, location, isIntersectOnXGridLine, ray) {
  * @param {number} columnNum
  * @param {number} distance
  */
-function drawWall(ctx, resolution, columnNum, distance, isIntersectOnXGridLine, intercept) {
+function drawWall(ctx, resolution, columnNum, distance, isIntersectOnXGridLine, intercept, textures) {
     // Note: for impl simplicity, this draws outside the canvas. Is that a (perf) problem?
     // Seems like yes, e.g. if we're right right next to a wall. But we need to know actual height
     // so we can texture it correctly.
     const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / Math.max(distance, 0.1));
     const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
-    drawWallImpl(ctx, isIntersectOnXGridLine, columnNum, y0, wallHeight, demoLightTexture, demoDarkTexture, intercept);
+
+    // TODO: restore demo textures.
+    const texture = isIntersectOnXGridLine ? textures[0] : textures[1];
+    drawWallImpl(ctx, isIntersectOnXGridLine, columnNum, y0, wallHeight, texture, intercept);
 }
 
 function getXInterceptSteps(ray) {

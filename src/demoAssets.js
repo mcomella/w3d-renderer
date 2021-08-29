@@ -1,4 +1,4 @@
-import { WALL_TEXTURE_SIZE } from "./config.js";
+import { WALL_TEXTURE_SIZE_PX } from "./config.js";
 import { assert } from "./util.js";
 
 export const demoMap = generateMap();
@@ -19,11 +19,11 @@ export const demoDarkTexture = generateTexture(0xAA);
  * @returns {Uint8ClampedArray[]}
  */
 function generateTexture(solidBlue) {
-    const texture = new Array(WALL_TEXTURE_SIZE);
+    const texture = new Array(WALL_TEXTURE_SIZE_PX);
 
     // Fill solid.
     for (let c = 0; c < texture.length; c++) {
-        const column = new Uint8ClampedArray(WALL_TEXTURE_SIZE * 4); // 4 for RGBA
+        const column = new Uint8ClampedArray(WALL_TEXTURE_SIZE_PX * 4); // 4 for RGBA
         texture[c] = column;
         for (let p = 0; p < column.length; p += 4) {
             drawColor(column, p, 0x00, 0x00, solidBlue);

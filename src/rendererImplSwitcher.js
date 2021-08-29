@@ -1,4 +1,4 @@
-import { BLOCK_SIZE } from './config.js';
+import { BLOCK_SIZE, WALL_TEXTURE_SIZE_BYTES, WALL_TEXTURE_SIZE_PX } from './config.js';
 import * as rcMath from './rcMath.js';
 import { assert } from './util.js';
 
@@ -35,16 +35,15 @@ function getWallDistW3d(closestInterceptDist, interceptLoc, playerLoc, playerAng
 export const drawWallImpl = drawTexturedWall;
 
 // eslint-disable-next-line no-unused-vars
-function drawTexturedWall(ctx, isIntersectX, columnNum, y0, wallHeight, lightTexture, darkTexture, intercept) {
-    const texture = isIntersectX ? lightTexture : darkTexture;
-
+function drawTexturedWall(ctx, isIntersectX, columnNum, y0, wallHeight, texture, intercept) {
     // Find which column of the wall to draw.
     const interceptVal = !isIntersectX ? intercept.x : intercept.y;
     const intersectionRatio = interceptVal % BLOCK_SIZE / BLOCK_SIZE; // e.g. if we hit the center = 0.5
-    const columnIndexToDraw = Math.floor(texture.length * intersectionRatio);
-    assert(columnIndexToDraw < texture.length, () =>
-            `columnIndex ${columnIndexToDraw} exceeded texture size ${texture.length}`);
-    const textureColumn = texture[columnIndexToDraw];
+    const columnIndexToDraw = Math.floor(WALL_TEXTURE_SIZE_PX * intersectionRatio);
+    const indexInto1DTextureArray = columnIndexToDraw * WALL_TEXTURE_SIZE_BYTES;
+    assert(indexInto1DTextureArray < texture.length, () =>
+            `index ${indexInto1DTextureArray} exceeded texture size ${texture.length}`);
+    const textureColumn = texture.subarray(indexInto1DTextureArray, indexInto1DTextureArray + WALL_TEXTURE_SIZE_BYTES);
 
     const imageData = ctx.createImageData(1, wallHeight);
     const data = imageData.data;
@@ -69,8 +68,7 @@ function drawTexturedWall(ctx, isIntersectX, columnNum, y0, wallHeight, lightTex
 }
 
 // eslint-disable-next-line no-unused-vars
-function drawTexturedWallOneColumn(ctx, isIntersectX, columnNum, y0, wallHeight, lightTexture, darkTexture) {
-    const texture = isIntersectX ? lightTexture : darkTexture;
+function drawTexturedWallOneColumn(ctx, isIntersectX, columnNum, y0, wallHeight, texture) {
     const scaleMultipiler = texture.length / 4 / wallHeight; // 4 to account for RGBA.
     function getTextureIndex(i) {
         // Alternative algo: 1) ceil. 2) split in half & interpolate central point.

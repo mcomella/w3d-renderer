@@ -21,4 +21,5 @@ export const WALL_HEIGHT_SCALE_FACTOR = RESOLUTION.height * 2; // Note: formerly
  */
 export const BLOCK_SIZE = 8 // ft
 
-export const WALL_TEXTURE_SIZE = 64;
+export const WALL_TEXTURE_SIZE_PX = 64; // w3d texture size
+export const WALL_TEXTURE_SIZE_BYTES = WALL_TEXTURE_SIZE_PX * 4; // stored in RGBA array.
