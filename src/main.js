@@ -57,7 +57,7 @@ function onAnimationFrame(time) {
     }
 }
 
-function requestAssetsFromServer() {
+function requestAssetsFromServerAndStartLoop() {
     function fetchAsset(path, onResponse) {
         // via https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Sending_and_Receiving_Binary_Data
         const req = new XMLHttpRequest();
@@ -66,6 +66,16 @@ function requestAssetsFromServer() {
         req.onload = (e) => onResponse(req.response);
         req.send(null);
     }
+
+    fetchAsset('w3d-assets/MAPHEAD.WL1', (response) => {
+        const maphead = w3dAssets.loadMaphead(response);
+
+        fetchAsset('w3d-assets/GAMEMAPS.WL1', (response) => {
+            const gamemaps = w3dAssets.loadGamemaps(response, maphead);
+            console.log(gamemaps);
+        });
+    });
+
 
     fetchAsset('/w3d-assets/VSWAP.WL1', (response) => {
         const vswap = w3dAssets.loadVSwap(response);
@@ -77,7 +87,7 @@ function requestAssetsFromServer() {
 function main() {
     configureBody();
     canvasContext = document.querySelector('canvas').getContext('2d');
-    requestAssetsFromServer();
+    requestAssetsFromServerAndStartLoop();
 }
 
 main();
