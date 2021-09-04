@@ -110,8 +110,8 @@ export function loadGamemaps(arrayBuffer, maphead) {
     function decompressPlane(offset, sizeCompressed) {
         const planeCompressed = arrayBuffer.slice(offset, offset + sizeCompressed);
         const planeArrayBuffer = decodeRlew(maphead.rlewTag, decodeCarmack(planeCompressed));
-        const planeArr = new Uint8Array(planeArrayBuffer);
-        assert(planeArr.length === 64 * 64 * 2 /* byte len */, () => `got len ${planeArr.length}`);
+        const planeArr = new Uint16Array(planeArrayBuffer);
+        assert(planeArr.length === 64 * 64, () => `got len ${planeArr.length}`);
         return planeArr;
     }
 

@@ -26,9 +26,9 @@ import { assert } from './util.js';
  * @param {import("./rcMath").Point} playerLoc
  * @param {number} playerAngle
  */
-export function renderFrame(ctx, resolution, playerLoc, playerAngle, textures) {
+export function renderFrame(ctx, resolution, playerLoc, playerAngle, maps, textures) {
     clearFrame(ctx, resolution);
-    drawWalls(ctx, resolution, playerLoc, playerAngle, textures);
+    drawWalls(ctx, resolution, playerLoc, playerAngle, maps, textures);
 }
 
 /**
@@ -51,7 +51,7 @@ function clearFrame(ctx, resolution) {
  * @param {import("./rcMath").Point} playerLoc
  * @param {number} thetaPlayer
  */
-function drawWalls(ctx, resolution, playerLoc, thetaPlayer, textures) {
+function drawWalls(ctx, resolution, playerLoc, thetaPlayer, maps, textures) {
     // This expression hardcodes the same field of view as in w3d (I think).
     const thetaLeftmostFoV = thetaPlayer - resolution.width / 2 / 10;
 
@@ -65,16 +65,18 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer, textures) {
         const yinterceptSteps = getYInterceptSteps(ray);
 
         // Cast the ray to each point in the grid until we intersect a wall.
+        let textureVal = {t: 0};
         while (true) {
             const xinterceptDist = rcMath.getDistance(xintercept, playerLoc);
             const yinterceptDist = rcMath.getDistance(yintercept, playerLoc);
             const closestIntercept = (xinterceptDist < yinterceptDist) ? xintercept : yintercept;
             const isIntersectOnXGridLine  = xinterceptDist < yinterceptDist;
 
-            if (doesLocationIntersectWall(demoMap.tiles, closestIntercept, isIntersectOnXGridLine, ray)) {
+            // TODO: restore demomap capability
+            if (doesLocationIntersectWall(maps[0], closestIntercept, isIntersectOnXGridLine, ray, textureVal)) {
                 const closestInterceptDist = (xinterceptDist < yinterceptDist) ? xinterceptDist : yinterceptDist;
                 const wallDist = getWallDist(closestInterceptDist, closestIntercept, playerLoc, thetaPlayer, ray.theta);
-                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectOnXGridLine, closestIntercept, textures);
+                drawWall(ctx, resolution, pixelColumnNum, wallDist, isIntersectOnXGridLine, closestIntercept, textures, textureVal);
                 break;
             }
 
@@ -95,22 +97,33 @@ function drawWalls(ctx, resolution, playerLoc, thetaPlayer, textures) {
  * @param {Ray} ray
  * @returns {boolean}
  */
-function doesLocationIntersectWall(map, location, isIntersectOnXGridLine, ray) {
+function doesLocationIntersectWall(map, location, isIntersectOnXGridLine, ray, textureVal) {
+    function isWall(value) {
+        const isWall = value <= 63;
+        if (isWall) {
+            textureVal.t = value;
+            return true;
+        }
+        return false;
+    }
+
+    const plane = map.plane0;
+
     // An intersection will be one grid point and one in between grid point,
     // e.g. (1, 2.3): we floor to conform to the grid.
     const mapSpaceLoc = {x: Math.floor(location.x / BLOCK_SIZE), y: Math.floor(location.y / BLOCK_SIZE)};
 
     // TODO: I don't think we need to check [y][x] if we're facing negative but I didn't get it working.
-    assert(mapSpaceLoc.x < map.length, () => `expected < ${map.length}. got ${mapSpaceLoc.x}`);
-    assert(mapSpaceLoc.y < map.length, () => `expected < ${map.length}. got ${mapSpaceLoc.y}`);
-    return map[mapSpaceLoc.y][mapSpaceLoc.x] === 'w' ||
+    assert(mapSpaceLoc.x < map.width, () => `expected < ${map.width}. got ${mapSpaceLoc.x}`);
+    assert(mapSpaceLoc.y < map.height, () => `expected < ${map.height}. got ${mapSpaceLoc.y}`);
+    return isWall(plane[mapSpaceLoc.y * map.width + mapSpaceLoc.x]) ||
             // Each tile in the map object is a block - it has four walls - so we need to check for
             // intersection with all four. If we're facing in a negative direction, we need to project
             // the tile forward; this comes for free in a positive direction.
             (isIntersectOnXGridLine && ray.xDirMultiplier < 0 &&
-                    mapSpaceLoc.x > 0 && map[mapSpaceLoc.y][mapSpaceLoc.x - 1] === 'w') ||
+                    mapSpaceLoc.x > 0 && isWall(plane[mapSpaceLoc.y * map.width + mapSpaceLoc.x - 1])) ||
             (!isIntersectOnXGridLine && ray.yDirMultiplier < 0 &&
-                    mapSpaceLoc.y > 0 && map[mapSpaceLoc.y - 1][mapSpaceLoc.x] === 'w');
+                    mapSpaceLoc.y > 0 && isWall(plane[(mapSpaceLoc.y - 1) * map.width + mapSpaceLoc.x]));
 }
 
 /**
@@ -119,14 +132,15 @@ function doesLocationIntersectWall(map, location, isIntersectOnXGridLine, ray) {
  * @param {number} columnNum
  * @param {number} distance
  */
-function drawWall(ctx, resolution, columnNum, distance, isIntersectOnXGridLine, intercept, textures) {
+function drawWall(ctx, resolution, columnNum, distance, isIntersectOnXGridLine, intercept, textures, textureVal) {
     // Note: for impl simplicity, this draws outside the canvas. Is that a (perf) problem?
     // Seems like yes, e.g. if we're right right next to a wall. But we need to know actual height
     // so we can texture it correctly.
     const wallHeight = Math.round(WALL_HEIGHT_SCALE_FACTOR / Math.max(distance, 0.1));
     const y0 = Math.round(resolution.height / 2 - wallHeight / 2);
     // const texture = isIntersectOnXGridLine ? demoLightTexture : demoDarkTexture;
-    const texture = isIntersectOnXGridLine ? textures[0] : textures[1];
+    // const texture = isIntersectOnXGridLine ? textures[0] : textures[1];
+    const texture = textures[textureVal.t]; // TODO: do I need to manually do light/dark?
     drawWallImpl(ctx, isIntersectOnXGridLine, columnNum, y0, wallHeight, texture, intercept);
 }
 
